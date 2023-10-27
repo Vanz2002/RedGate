@@ -11,12 +11,13 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
-	"parkIR.com/b/db"
-	"parkIR.com/b/handlers"
+	"redgate.com/b/db"
+	"redgate.com/b/db/sqlc"
+	"redgate.com/b/handlers"
 )
 
 func main() {
-	l := log.New(os.Stdout, "PARK-IR-SERVER-", log.LstdFlags)
+	l := log.New(os.Stdout, "RED-GATE-SERVER-", log.LstdFlags)
 	ctx := context.Background()
 	// load env
 	err := godotenv.Load("dev.env")
@@ -34,7 +35,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:        "127.0.0.1:" + os.Getenv("PORT"),
-		Handler:     defineMultiplexer(l),
+		Handler:     defineMultiplexer(l, queries),
 		IdleTimeout: 30 * time.Second,
 		ReadTimeout: time.Second,
 	}
@@ -70,7 +71,7 @@ func stopServer(s *http.Server, l *log.Logger, ctx *context.Context, cancel *con
 	c()
 }
 
-func defineMultiplexer(l *log.Logger) http.Handler {
+func defineMultiplexer(l *log.Logger, q *sqlc.Queries) http.Handler {
 	// reference to the handler
 	hello_handler := handlers.NewHello(l)
 

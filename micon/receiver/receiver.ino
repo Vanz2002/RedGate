@@ -12,7 +12,6 @@ void setup() {
 
 void loop() {
   if (irReceiver.decode(&results)) {
-    // Check if the received IR signal is using the NEC protocol
     if (results.decode_type == NEC) {
       char receivedChar = char(results.value & 0xFF);
       Serial.print("Received Character: ");

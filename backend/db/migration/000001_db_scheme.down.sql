@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS vehicle_data;
+DROP TABLE IF EXISTS account;
