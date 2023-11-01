@@ -7,28 +7,29 @@ package sqlc
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO account (
-  email, password_hash
+  username, email, password_hash
 ) VALUES (
-  $1, $2
+  $1, $2, $3
 )
-RETURNING account_id, email, password_hash, created_at, is_subscribe
+RETURNING account_id, username, email, password_hash, created_at, is_subscribe
 `
 
 type CreateAccountParams struct {
+	Username     string `json:"username"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"password_hash"`
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount, arg.Email, arg.PasswordHash)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.Username, arg.Email, arg.PasswordHash)
 	var i Account
 	err := row.Scan(
 		&i.AccountID,
+		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
@@ -40,14 +41,15 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 const deleteAccount = `-- name: DeleteAccount :one
 DELETE FROM account
 WHERE account_id = $1
-RETURNING account_id, email, password_hash, created_at, is_subscribe
+RETURNING account_id, username, email, password_hash, created_at, is_subscribe
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, accountID sql.NullString) (Account, error) {
+func (q *Queries) DeleteAccount(ctx context.Context, accountID string) (Account, error) {
 	row := q.db.QueryRowContext(ctx, deleteAccount, accountID)
 	var i Account
 	err := row.Scan(
 		&i.AccountID,
+		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
@@ -57,15 +59,16 @@ func (q *Queries) DeleteAccount(ctx context.Context, accountID sql.NullString) (
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT account_id, email, password_hash, created_at, is_subscribe FROM account
+SELECT account_id, username, email, password_hash, created_at, is_subscribe FROM account
 WHERE account_id = $1 LIMIT 1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, accountID sql.NullString) (Account, error) {
+func (q *Queries) GetAccount(ctx context.Context, accountID string) (Account, error) {
 	row := q.db.QueryRowContext(ctx, getAccount, accountID)
 	var i Account
 	err := row.Scan(
 		&i.AccountID,
+		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
@@ -75,7 +78,7 @@ func (q *Queries) GetAccount(ctx context.Context, accountID sql.NullString) (Acc
 }
 
 const getAccountbyEmail = `-- name: GetAccountbyEmail :one
-SELECT account_id, email, password_hash, created_at, is_subscribe FROM account
+SELECT account_id, username, email, password_hash, created_at, is_subscribe FROM account
 WHERE email = $1 LIMIT 1
 `
 
@@ -84,6 +87,7 @@ func (q *Queries) GetAccountbyEmail(ctx context.Context, email string) (Account,
 	var i Account
 	err := row.Scan(
 		&i.AccountID,
+		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.CreatedAt,
@@ -93,7 +97,7 @@ func (q *Queries) GetAccountbyEmail(ctx context.Context, email string) (Account,
 }
 
 const listAccounts = `-- name: ListAccounts :many
-SELECT account_id, email, password_hash, created_at, is_subscribe FROM account
+SELECT account_id, username, email, password_hash, created_at, is_subscribe FROM account
 ORDER BY created_at ASC
 `
 
@@ -108,6 +112,7 @@ func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
 		var i Account
 		if err := rows.Scan(
 			&i.AccountID,
+			&i.Username,
 			&i.Email,
 			&i.PasswordHash,
 			&i.CreatedAt,

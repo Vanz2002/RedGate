@@ -6,14 +6,28 @@ package sqlc
 
 import (
 	"database/sql"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 type Account struct {
-	AccountID    sql.NullString `json:"account_id"`
-	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
-	CreatedAt    sql.NullTime   `json:"created_at"`
-	IsSubscribe  sql.NullBool   `json:"is_subscribe"`
+	AccountID    string       `json:"account_id"`
+	Username     string       `json:"username"`
+	Email        string       `json:"email"`
+	PasswordHash string       `json:"password_hash"`
+	CreatedAt    sql.NullTime `json:"created_at"`
+	IsSubscribe  sql.NullBool `json:"is_subscribe"`
+}
+
+type Session struct {
+	ID           uuid.UUID `json:"id"`
+	AccountID    string    `json:"account_id"`
+	Username     string    `json:"username"`
+	RefreshToken string    `json:"refresh_token"`
+	IsBlocked    bool      `json:"is_blocked"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type VehicleDatum struct {

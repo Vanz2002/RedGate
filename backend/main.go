@@ -14,6 +14,7 @@ import (
 	"redgate.com/b/db"
 	"redgate.com/b/db/sqlc"
 	"redgate.com/b/handlers"
+	"redgate.com/b/token"
 )
 
 func main() {
@@ -72,12 +73,26 @@ func stopServer(s *http.Server, l *log.Logger, ctx *context.Context, cancel *con
 }
 
 func defineMultiplexer(l *log.Logger, q *sqlc.Queries) http.Handler {
+	var u handlers.AuthedUser
+
 	// reference to the handler
 	hello_handler := handlers.NewHello(l)
+	account_handler := handlers.NewAccountHandler(l, q, &u)
+	token, err := token.NewPasetoMaker(os.Getenv("PASETO_KEY"))
+	if err != nil {
+		log.Fatal("Failed creating Paseto token")
+	}
+	auth_handler := handlers.NewAuthHandler(l, q, &u, &token)
+	token_handler := handlers.NewTokenHandler(l, q, &u, &token)
 
 	// handle multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", hello_handler)
+	mux.HandleFunc("/account/list", account_handler.ListAccountsH)
+
+	mux.HandleFunc("/auth/login", auth_handler.Login)
+	mux.HandleFunc("/auth/signup", auth_handler.Signup)
+	mux.HandleFunc("/auth/renewToken", token_handler.RenewToken)
 
 	corsMiddleware := cors.Default().Handler
 
