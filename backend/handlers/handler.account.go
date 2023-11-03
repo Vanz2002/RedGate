@@ -84,6 +84,9 @@ func (ah *AccountHandler) createAccount(w http.ResponseWriter, r *http.Request) 
 // }
 
 func (ah *AccountHandler) listAccounts(w http.ResponseWriter, r *http.Request) error {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
+
 	accounts, err := ah.h.q.ListAccounts(r.Context())
 	if err != nil {
 		http.Error(w, "Error listing accounts", http.StatusInternalServerError)

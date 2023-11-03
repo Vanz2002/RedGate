@@ -2,27 +2,48 @@ import React, { useEffect, useState } from "react";
 import "../../App.css";
 import "../../index.css";
 import axios from "axios";
+import { useCookies } from "react-cookie";
+import checkAndRenewToken from "./renewToken";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [username, setUsername] = useState("");
+  const [cookies, setCookie] = useCookies([
+    "accessToken",
+    "refreshToken",
+    "accessTokenEx",
+  ]);
 
   const [success, setSuccess] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
 
+  const instance = axios.create({
+    baseURL: "http://127.0.0.1:4444/", // Replace with your API base UR
+  });
+
   useEffect(() => {
-    // Fetch data from localhost:4444
-    axios
-      .get("http://127.0.0.1:4444/account/signup")
-      .then((response) => {
-        setAccounts(response.data); // Set the data in state
-        accounts.forEach((a) => {
-          console.log(a.username);
-        });
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+    const renewTokenParam: RenewToken = {
+      accessTokenExpire: new Date(cookies.accessTokenEx),
+      refreshToken: cookies.refreshToken,
+    };
+    // Call the checkAndRenewToken function before making any API call
+    checkAndRenewToken(renewTokenParam, setCookie).then(() => {
+      instance
+        .get("/account/list", {
+          headers: {
+            Authorization: `Bearer ${cookies.accessToken}`,
+          },
+        })
+        .then((response) => {
+          if (response.status == 200) {
+            setAccounts(response.data); // Set the data in state
+          }
+          console.log(response.data);
+        })
+        .catch((error) => console.error("Error fetching data:", error));
+    });
   }, [success]);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,29 +58,49 @@ const LoginForm: React.FC = () => {
     setUsername(e.target.value);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch("http://127.0.0.1:4444/account/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          username,
-        }),
-      });
+    const formData = new URLSearchParams();
+    formData.append("username", username);
+    formData.append("email", email);
+    formData.append("password", password);
 
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess(true);
-        console.log("Form submitted:", data);
-      } else {
-        console.error("Form submission failed");
-      }
+    try {
+      await instance.post("http://127.0.0.1:4444/auth/signup", formData, {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+    } catch (error) {
+      console.error("Form submission error:", error);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const formData = new URLSearchParams();
+    formData.append("email", email);
+    formData.append("password", password);
+
+    try {
+      const resp = await instance.post(
+        "http://127.0.0.1:4444/auth/login",
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      const { access_token, access_token_expire, refresh_token } =
+        resp.data as LoginResponseJson;
+      setCookie("accessToken", access_token);
+      setCookie("accessTokenEx", access_token_expire);
+      setCookie("refreshToken", refresh_token);
+      setSuccess(true);
     } catch (error) {
       console.error("Form submission error:", error);
     }
@@ -68,7 +109,7 @@ const LoginForm: React.FC = () => {
   return (
     <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-md shadow-lg">
       <h2 className="text-[100px] font-bold mb-6 text-green-700">RED-GATE</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
         <div className="mb-4">
           <label
             htmlFor="email"
@@ -142,7 +183,11 @@ const LoginForm: React.FC = () => {
       </form>
       <div>
         <h2>Fetched Data:</h2>
-        
+        <ul>
+          {accounts.map((account, index) => (
+            <li key={index}>{account.account_id}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );
