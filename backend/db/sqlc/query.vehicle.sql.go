@@ -38,19 +38,16 @@ func (q *Queries) InsertVehicle(ctx context.Context, arg InsertVehicleParams) (V
 	return i, err
 }
 
-const updateVehicle = `-- name: UpdateVehicle :one
-UPDATE vehicle_data SET account_id = $2, plate_number = $3 WHERE v_id = $1 RETURNING v_id, account_id, plate_number
+const verifyVehicle = `-- name: VerifyVehicle :one
+SELECT vd.plate_number
+FROM vehicle_data AS vd
+INNER JOIN account AS a ON vd.account_id = a.account_id
+WHERE vd.v_id = $1 AND a.is_subscribe = true
 `
 
-type UpdateVehicleParams struct {
-	VID         string         `json:"v_id"`
-	AccountID   sql.NullString `json:"account_id"`
-	PlateNumber sql.NullString `json:"plate_number"`
-}
-
-func (q *Queries) UpdateVehicle(ctx context.Context, arg UpdateVehicleParams) (VehicleDatum, error) {
-	row := q.db.QueryRowContext(ctx, updateVehicle, arg.VID, arg.AccountID, arg.PlateNumber)
-	var i VehicleDatum
-	err := row.Scan(&i.VID, &i.AccountID, &i.PlateNumber)
-	return i, err
+func (q *Queries) VerifyVehicle(ctx context.Context, vID string) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, verifyVehicle, vID)
+	var plate_number sql.NullString
+	err := row.Scan(&plate_number)
+	return plate_number, err
 }

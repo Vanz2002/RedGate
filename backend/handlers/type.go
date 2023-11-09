@@ -26,6 +26,10 @@ type AuthHandler struct {
 	t token.Maker
 }
 
+type PlateHandler struct {
+	h *Handler
+}
+
 type HandlerParam struct {
 	w           http.ResponseWriter
 	r           *http.Request
@@ -55,4 +59,9 @@ type renewAccessTokenRequest struct {
 type renewAccessTokenResponse struct {
 	AccessToken          string    `json:"access_token"`
 	AccessTokenExpiresAt time.Time `json:"access_token_expire"`
+}
+
+type verifyResponse struct {
+	VID     string
+	success bool
 }

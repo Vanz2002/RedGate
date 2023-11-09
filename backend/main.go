@@ -84,6 +84,7 @@ func defineMultiplexer(l *log.Logger, q *sqlc.Queries) http.Handler {
 	}
 	auth_handler := handlers.NewAuthHandler(l, q, &u, &token)
 	token_handler := handlers.NewTokenHandler(l, q, &u, &token)
+	plate_handler := handlers.NewPlateIDHandler(l, q, &u)
 
 	// handle multiplexer
 	mux := http.NewServeMux()
@@ -94,7 +95,10 @@ func defineMultiplexer(l *log.Logger, q *sqlc.Queries) http.Handler {
 	mux.HandleFunc("/auth/signup", auth_handler.Signup)
 	mux.HandleFunc("/auth/renewToken", token_handler.RenewToken)
 
-	corsMiddleware := cors.Default().Handler
+	mux.HandleFunc("/plate/create", plate_handler.CreatePlateHandler)
+	mux.HandleFunc("/plate/verify", plate_handler.VerifyPlateHandler)
+
+	corsMiddleware := cors.AllowAll().Handler
 
 	handler := corsMiddleware(mux)
 

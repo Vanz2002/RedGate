@@ -77,7 +77,8 @@ func checkAuthorization(w http.ResponseWriter, r *http.Request, u *AuthedUser) e
 	}
 
 	bearer_token := authHeader[len("Bearer "):]
-	maker, err := token.NewPasetoMaker(os.Getenv("PASETO_KEY"))
+	PASETO_KEY := os.Getenv("PASETO_KEY")
+	maker, err := token.NewPasetoMaker(PASETO_KEY)
 	if err != nil {
 		http.Error(w, "Failed to verify", http.StatusInternalServerError)
 		return errors.New("cannot create paseto")
@@ -85,8 +86,8 @@ func checkAuthorization(w http.ResponseWriter, r *http.Request, u *AuthedUser) e
 
 	payload, err := maker.VerifyToken(bearer_token)
 	if err != nil {
-		http.Error(w, "Invalid Token", http.StatusNonAuthoritativeInfo)
-		return errors.New("invalid token")
+		http.Error(w, "Invalid Token or Expired", http.StatusNonAuthoritativeInfo)
+		return errors.New("invalid token or expired")
 	}
 
 	u.UserID = payload.AccountID

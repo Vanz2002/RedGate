@@ -7,7 +7,20 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 )
+
+const accountSubscribe = `-- name: AccountSubscribe :one
+UPDATE account SET is_subscribe = true WHERE account_id = $1
+RETURNING is_subscribe
+`
+
+func (q *Queries) AccountSubscribe(ctx context.Context, accountID string) (sql.NullBool, error) {
+	row := q.db.QueryRowContext(ctx, accountSubscribe, accountID)
+	var is_subscribe sql.NullBool
+	err := row.Scan(&is_subscribe)
+	return is_subscribe, err
+}
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO account (

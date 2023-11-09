@@ -20,4 +20,14 @@ func PasswordIsValid(password string) bool {
 	return regexp.MustCompile(passwordPattern).MatchString(password)
 }
 
-// TODO check uniique username
+func PlateNumberIsValid(plate string) bool {
+	pattern1 := `^[A-Z]{2}\d{4}[A-Z]{2}$`
+	pattern2 := `^[A-Z]\d{4}[A-Z]$`
+
+	// Compile the regular expressions
+	regex1 := regexp.MustCompile(pattern1)
+	regex2 := regexp.MustCompile(pattern2)
+
+	// Check if the plate number matches either format
+	return regex1.MatchString(plate) || regex2.MatchString(plate)
+}

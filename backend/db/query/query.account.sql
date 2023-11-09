@@ -22,3 +22,7 @@ RETURNING *;
 DELETE FROM account
 WHERE account_id = $1
 RETURNING *;
+
+-- name: AccountSubscribe :one
+UPDATE account SET is_subscribe = true WHERE account_id = $1
+RETURNING is_subscribe;
