@@ -57,7 +57,7 @@ func main() {
 }
 
 func startServer(s *http.Server, l *log.Logger) {
-	l.Println("🔥 Server is starting on", s.Addr)
+	l.Println("🔥 Server is running on", s.Addr)
 
 	err := s.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
@@ -96,6 +96,7 @@ func defineMultiplexer(l *log.Logger, q *sqlc.Queries) http.Handler {
 	mux.HandleFunc("/auth/renewToken", token_handler.RenewToken)
 
 	mux.HandleFunc("/plate/create", plate_handler.CreatePlateHandler)
+	mux.HandleFunc("/plate/getID", plate_handler.GetPlateIDHandler)
 	mux.HandleFunc("/plate/verify", plate_handler.VerifyPlateHandler)
 
 	corsMiddleware := cors.AllowAll().Handler

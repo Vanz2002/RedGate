@@ -19,6 +19,11 @@ func (plate_h *PlateHandler) CreatePlateHandler(w http.ResponseWriter, r *http.R
 	plate_h.h.handleRequest(hp, plate_h.h.u)
 }
 
+func (plate_h *PlateHandler) GetPlateIDHandler(w http.ResponseWriter, r *http.Request) {
+	hp := HandlerParam{w, r, http.MethodPost, plate_h.getPlateId}
+	plate_h.h.handleRequest(hp, plate_h.h.u)
+}
+
 func (plate_h *PlateHandler) VerifyPlateHandler(w http.ResponseWriter, r *http.Request) {
 	hp := HandlerParam{w, r, http.MethodPost, plate_h.verifyPlateId}
 	plate_h.h.handleRequest(hp, nil)
@@ -61,6 +66,28 @@ func (ph *PlateHandler) createPlateId(w http.ResponseWriter, r *http.Request) er
 
 	w.WriteHeader(http.StatusCreated)
 	toJSON(w, veh)
+	return nil
+}
+
+func (ph *PlateHandler) getPlateId(w http.ResponseWriter, r *http.Request) error {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form data", http.StatusBadRequest)
+		return err
+	}
+
+	// Retrieve form values
+	accountID := r.FormValue("account_id")
+
+	// Create cardParams using retrieved form values
+
+	plateID, err := ph.h.q.GetPlateID(r.Context(), utils.StringToNullString(accountID))
+	if err != nil {
+		http.Error(w, "Error inserting data", http.StatusInternalServerError)
+		return err
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	toJSON(w, plateID)
 	return nil
 }
 
