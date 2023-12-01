@@ -59,7 +59,7 @@ func checkHTTPMethod(w http.ResponseWriter, reqMethod, desMethod string) error {
 }
 
 func checkAuthorization(w http.ResponseWriter, r *http.Request, u *AuthedUser) error {
-	if strings.HasPrefix(r.URL.Path, "/auth/") {
+	if strings.HasPrefix(r.URL.Path, "/auth/") || strings.HasPrefix(r.URL.Path, "/plate/verify") {
 		// If the request URI starts with /auth/, skip authorization
 		return nil
 	}

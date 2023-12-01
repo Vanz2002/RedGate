@@ -21,7 +21,7 @@ func (plate_h *PlateHandler) CreatePlateHandler(w http.ResponseWriter, r *http.R
 
 func (plate_h *PlateHandler) VerifyPlateHandler(w http.ResponseWriter, r *http.Request) {
 	hp := HandlerParam{w, r, http.MethodPost, plate_h.verifyPlateId}
-	plate_h.h.handleRequest(hp, plate_h.h.u)
+	plate_h.h.handleRequest(hp, nil)
 }
 
 func (ph *PlateHandler) createPlateId(w http.ResponseWriter, r *http.Request) error {
