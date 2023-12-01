@@ -3,7 +3,7 @@ import "../../App.css";
 import "../../index.css";
 import axios from "axios";
 import { useCookies } from "react-cookie";
-import checkAndRenewToken from "./renewToken";
+import checkAndRenewToken from "../../utils/renewToken";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +14,7 @@ const LoginForm: React.FC = () => {
     "accessToken",
     "refreshToken",
     "accessTokenEx",
+    "userID",
   ]);
 
   const [success, setSuccess] = useState(false);
@@ -95,11 +96,12 @@ const LoginForm: React.FC = () => {
         }
       );
 
-      const { access_token, access_token_expire, refresh_token } =
+      const { access_token, access_token_expire, refresh_token, user_id } =
         resp.data as LoginResponseJson;
       setCookie("accessToken", access_token);
       setCookie("accessTokenEx", access_token_expire);
       setCookie("refreshToken", refresh_token);
+      setCookie("userID", user_id);
       setSuccess(true);
     } catch (error) {
       console.error("Form submission error:", error);

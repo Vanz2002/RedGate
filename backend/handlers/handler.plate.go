@@ -4,8 +4,10 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
 	"redgate.com/b/db/sqlc"
+	"redgate.com/b/token"
 	"redgate.com/b/utils"
 )
 
@@ -20,7 +22,7 @@ func (plate_h *PlateHandler) CreatePlateHandler(w http.ResponseWriter, r *http.R
 }
 
 func (plate_h *PlateHandler) GetPlateIDHandler(w http.ResponseWriter, r *http.Request) {
-	hp := HandlerParam{w, r, http.MethodPost, plate_h.getPlateId}
+	hp := HandlerParam{w, r, http.MethodGet, plate_h.getPlateId}
 	plate_h.h.handleRequest(hp, plate_h.h.u)
 }
 
@@ -40,7 +42,7 @@ func (ph *PlateHandler) createPlateId(w http.ResponseWriter, r *http.Request) er
 	plateNumber := r.FormValue("plate_number")
 	if !utils.PlateNumberIsValid(plateNumber) {
 		http.Error(w, "Invalid plate number", http.StatusInternalServerError)
-		return errors.New("Invalid plate number")
+		return errors.New("invalid plate number")
 	}
 	vID := utils.GeneratePlateID(plateNumber)
 
@@ -70,23 +72,28 @@ func (ph *PlateHandler) createPlateId(w http.ResponseWriter, r *http.Request) er
 }
 
 func (ph *PlateHandler) getPlateId(w http.ResponseWriter, r *http.Request) error {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Error parsing form data", http.StatusBadRequest)
-		return err
+	authHeader := r.Header.Get("Authorization")
+	access_token := authHeader[len("Bearer "):]
+	PASETO_KEY := os.Getenv("PASETO_KEY")
+	maker, err := token.NewPasetoMaker(PASETO_KEY)
+
+	payload, err := maker.VerifyToken(access_token)
+	if err != nil {
+		http.Error(w, "Invalid Token or Expired", http.StatusNonAuthoritativeInfo)
+		return errors.New("invalid token or expired")
 	}
 
-	// Retrieve form values
-	accountID := r.FormValue("account_id")
+	accountID := payload.AccountID
 
 	// Create cardParams using retrieved form values
 
 	plateID, err := ph.h.q.GetPlateID(r.Context(), utils.StringToNullString(accountID))
 	if err != nil {
-		http.Error(w, "Error inserting data", http.StatusInternalServerError)
+		http.Error(w, "Error getting data/no result", http.StatusInternalServerError)
 		return err
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	toJSON(w, plateID)
 	return nil
 }
